@@ -1,7 +1,7 @@
 <template>
   <view class="index">
-    <NumberDisplay/>
-    <NumberSubmit/>
+    <!-- <NumberDisplay/>
+     <NumberSubmit/> -->
     <Question/>
   </view>
 </template>
