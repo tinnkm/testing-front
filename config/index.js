@@ -14,6 +14,7 @@ const config = {
   },
   copy: {
     patterns: [
+      // { from: 'src/components/vant/wxs', to: 'dist/components/vant/wxs' }
     ],
     options: {
     }
@@ -24,7 +25,7 @@ const config = {
       pxtransform: {
         enable: true,
         config: {
-
+          // selectorBlackList: [/van-/]
         }
       },
       url: {

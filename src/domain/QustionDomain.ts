@@ -1,4 +1,4 @@
-import {Choice} from "./Choice";
+import {ChoiceDomain} from "./ChoiceDomain";
 import {QuestionType} from "./QuestionType";
 
 export interface QustionDomain {
@@ -25,7 +25,7 @@ export interface QustionDomain {
   /**
    * 选项
    */
-  choices?: Array<Choice>
+  choices?: Array<ChoiceDomain>
   /**
    * 资源id
    */
