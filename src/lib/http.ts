@@ -1,7 +1,7 @@
 /**
  * 请求封装
  */
-import { request, RequestParams } from "@tarojs/taro";
+import { request, RequestParams, RequestTask } from "@tarojs/taro";
 
 /**
  * 返回格式
@@ -10,10 +10,14 @@ export interface IResponseData<T = any> {
   code: string;
   msg: string;
   data: T;
+  success: Boolean;
 }
 
 class HttpRequest {
 
+  /**
+   * 基础请求参数封装
+   */
   static baseOptions = {
     header: {
       "content-type": "application/json"
@@ -21,57 +25,106 @@ class HttpRequest {
     dataType: "json"
   };
 
+  /**
+   * 生成完整的请求地址
+   * @param url 接口地址
+   */
   static generateFullUrl = (url: string) =>
     `${process.env.BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 
-  static requestSuccessHandler = (res, isCheckResponse, rs, rj) => {
+  /**
+   * 请求success处理
+   * @param res 响应体
+   * @param isCheckResponse 是否检查响应体
+   * @param rs Promise的允许请求
+   * @param rj Promise的拒绝请求
+   */
+  static requestSuccessHandler = (res: IResponseData, isCheckResponse: Boolean, rs, rj) => {
     if (!isCheckResponse) {
       rs(res);
-      return;
+    }
+    if (res.success) {
+      rs(res.data)
+    } else {
+      rj(res)
     }
   };
 
-  static requestFailHandler = (error, rj) => {
-
+  /**
+   * 请求错误处理
+   * @param error 错误响应
+   * @param rj Promise的拒绝请求
+   */
+  static requestFailHandler = (error: IResponseData, rj) => {
+    // 统一异常处理
   };
 
-  static request(url, method, data = {}, options = {}, isCheckResponse = true) {
+  /**
+   * 请求方法
+   * @param url 接口地址
+   * @param method 请求方法
+   * @param data 请求数据
+   * @param options 自定义参数
+   * @param isCheckResponse 是否检查响应体
+   */
+  static doRequest(url: string, method: string, data = {}, options = {}, isCheckResponse = true) {
     const $options = Object.assign(
       {},
       HttpRequest.baseOptions,
       options,
       { method }
     );
-    return new Promise((rs, rj) =>
-      request(
+    return new Promise((rs, rj) => {
+      Taro.showLoading({
+        title: '加载中...',
+        mask: true
+      })
+
+      return request<IResponseData>(
         Object.assign({}, $options, {
           url: HttpRequest.generateFullUrl(url),
           data,
-          success: () => {
-
+          success: (res: any) => {
+            HttpRequest.requestSuccessHandler(res, isCheckResponse, rs, rj)
           },
-          fail: () => {
-
-          }}) as RequestParams
-      )
-    ) as Promise<IResponseData>;
+          fail: (e: any) => {
+            HttpRequest.requestFailHandler(e, rj)
+          },
+          complete: () => {
+            Taro.hideLoading()
+          }
+        }) as RequestParams
+      ) as RequestTask<IResponseData>
+    })
   }
 
-  static get = async (url, data = {}, options = {}, isCheckResponse = true) =>
-    HttpRequest.request(url, "GET", data, options, isCheckResponse);
+  /**
+   * get请求
+   */
+  static get = async (url: any, data = {}, options = {}, isCheckResponse = true) =>
+    HttpRequest.doRequest(url, "GET", data, options, isCheckResponse);
 
-  static post = async (url, data = {}, options = {}, isCheckResponse = true) =>
-    HttpRequest.request(url, "POST", data, options, isCheckResponse);
+  /**
+   * post请求
+   */
+  static post = async (url: any, data = {}, options = {}, isCheckResponse = true) =>
+    HttpRequest.doRequest(url, "POST", data, options, isCheckResponse);
 
-  static put = async (url, data = {}, options = {}, isCheckResponse = true) =>
-    HttpRequest.request(url, "PUT", data, options, isCheckResponse);
+  /**
+   * put请求
+   */
+  static put = async (url: any, data = {}, options = {}, isCheckResponse = true) =>
+    HttpRequest.doRequest(url, "PUT", data, options, isCheckResponse);
 
+  /**
+   * delete请求
+   */
   static delete = async (
-    url,
+    url: any,
     data = {},
     options = {},
     isCheckResponse = true
-  ) => HttpRequest.request(url, "DELETE", data, options, isCheckResponse);
+  ) => HttpRequest.doRequest(url, "DELETE", data, options, isCheckResponse);
 }
 
 export { HttpRequest };
